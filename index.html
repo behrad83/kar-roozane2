@@ -85,6 +85,9 @@
   .addrow button:hover{background:var(--accent);color:#fff}
   textarea{width:100%;font-family:inherit;font-size:14px;line-height:1.8;border:1px solid var(--line-2);border-radius:11px;padding:11px;resize:vertical;min-height:70px;color:var(--ink)}
   textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  textarea.warn{border-color:var(--warn);box-shadow:0 0 0 3px var(--warn-soft);animation:pulseWarn .5s}
+  @keyframes pulseWarn{0%{box-shadow:0 0 0 0 var(--warn-soft)}100%{box-shadow:0 0 0 3px var(--warn-soft)}}
+  .descwarn{margin-top:10px;background:var(--warn-soft);color:var(--warn);border:1px solid #E8B4BC;border-radius:10px;padding:9px 12px;font-size:12.5px}
   .daytotal{display:flex;align-items:center;justify-content:space-between;padding:16px;border-top:1px solid var(--line);background:#FBFDFD;border-radius:0 0 var(--r) var(--r)}
   .daytotal .k{font-size:14px;color:var(--muted)}
   .daytotal .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}.daytotal .v small{font-size:13px;font-weight:500;color:var(--muted)}
@@ -210,10 +213,15 @@
       </details>
 
       <div class="sect">
-        <h3><span class="dot ex"></span> وقفه‌ها (ورزش/استراحت)</h3>
-        <div class="sub">در ساعت حضور ولی بدون کار؛ از جمع کم می‌شود.</div>
+        <h3><span class="dot ex"></span> وقفه‌ها</h3>
+        <div class="sub">در ساعت حضور ولی بدون کار (مثل ورزش)؛ از جمع کم می‌شود. فقط یکی از ساعت یا دقیقه را پر کن.</div>
         <div class="items" id="breaks-list"></div>
-        <div class="addrow"><input class="txt" id="b-label" placeholder="مثلاً ورزش"><input class="hrs" id="b-hrs" placeholder="ساعت" inputmode="decimal"><button id="b-add">+</button></div>
+        <div class="addrow">
+          <input class="txt" id="b-label" placeholder="مثلاً ورزش">
+          <input class="hrs" id="b-hr" placeholder="ساعت" inputmode="numeric">
+          <input class="hrs" id="b-min" placeholder="دقیقه" inputmode="numeric">
+          <button id="b-add">+</button>
+        </div>
       </div>
 
       <div class="sect">
@@ -226,6 +234,7 @@
       <div class="sect">
         <h3>شرح کار امروز</h3>
         <textarea id="d-desc" placeholder="کارهای داخل ساعت حضور…"></textarea>
+        <div id="desc-warn" class="descwarn hide">⚠ توضیحات کارِ امروز را ننوشتی. اگر عمدی است اشکالی ندارد، ولی بهتر است پرش کنی.</div>
       </div>
 
       <div class="sync" id="sync"></div>
@@ -261,7 +270,7 @@
         <div class="mstat"><div class="k">فعالیت خارج</div><div class="v" id="mv-extn">۰</div></div>
         <div class="mstat"><div class="k">جمع کل</div><div class="v" id="mv-total">۰</div></div>
       </div>
-      <div class="paycard"><div class="k">مبلغ دریافتی این ماه</div><div class="v"><span id="mv-pay">۰</span> <small>تومان</small></div></div>
+      <div class="paycard hide"><div class="k">مبلغ دریافتی این ماه</div><div class="v"><span id="mv-pay">۰</span> <small>تومان</small></div></div>
       <div class="mlist" id="mv-daycount"></div>
       <div class="mstatus" id="mv-status"></div>
       <div class="mv-actions"><button class="btn btn-primary" id="mv-export">استخراج فایل اکسل</button></div>
@@ -403,7 +412,15 @@ function renderHero(){
   else{st.innerHTML=`ورود <b>${toFa(curDay.start)}</b> · خروج <b>${toFa(curDay.end)}</b>`;btn.classList.add("done");btn.innerHTML="✓ امروز ثبت شد";btn.onclick=null;}
 }
 function nowHM(){const n=new Date();return n.getHours()+":"+String(n.getMinutes()).padStart(2,"0");}
-function stamp(w){const t=nowHM();if(w==="start")curDay.start=t;else curDay.end=t;$(`c-${w}-manual`).value=toFa(t);setClock(w);commit();}
+function stamp(w){
+  const t=nowHM();if(w==="start")curDay.start=t;else curDay.end=t;
+  $(`c-${w}-manual`).value=toFa(t);setClock(w);commit();
+  if(w==="end" && !(curDay.desc&&curDay.desc.trim())){   // remind to fill توضیحات (not mandatory)
+    const ta=$("d-desc");ta.classList.remove("warn");void ta.offsetWidth;ta.classList.add("warn");
+    $("desc-warn").classList.remove("hide");
+    ta.scrollIntoView({behavior:"smooth",block:"center"});
+  }
+}
 function commit(){writeCache(cur,curDay);renderHero();pushDay(cur,curDay);}
 let descT;
 function commitDebounced(){writeCache(cur,curDay);renderHero();clearTimeout(descT);descT=setTimeout(()=>pushDay(cur,curDay),700);}
@@ -447,21 +464,49 @@ function normalizeTime(raw){
   inp.addEventListener("blur",finish);
   inp.addEventListener("keydown",e=>{if(e.key==="Enter"){finish();inp.blur();}});
 });
+function hoursLabel(h){                       // 0.5 -> "۳۰ دقیقه" , 1.5 -> "۱٫۵ ساعت"
+  const mins=Math.round(h*60);
+  if(mins<60) return faN(mins)+" دقیقه";
+  return faN(h)+" ساعت";
+}
 function renderItems(kind){
   const list=kind==="breaks"?curDay.breaks:curDay.externals;
   const box=$(kind==="breaks"?"breaks-list":"ext-list");box.innerHTML="";
   list.forEach((it,i)=>{const row=document.createElement("div");row.className="item";
-    row.innerHTML=`<span class="txt">${esc(it.label||"—")}</span><span class="hrs">${faN(it.hours)} ساعت</span><button class="x">✕</button>`;
+    const amt=kind==="breaks"?hoursLabel(it.hours):(faN(it.hours)+" ساعت");
+    row.innerHTML=`<span class="txt">${esc(it.label||"—")}</span><span class="hrs">${amt}</span><button class="x">✕</button>`;
     row.querySelector(".x").onclick=()=>{list.splice(i,1);renderItems(kind);commit();};box.appendChild(row);});
 }
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
-function addItem(kind){const lp=kind==="breaks"?"b":"e";const label=$(`${lp}-label`).value.trim();const hrs=Number(toEn($(`${lp}-hrs`).value));if(!label&&!hrs)return;
-  (kind==="breaks"?curDay.breaks:curDay.externals).push({label:label||(kind==="breaks"?"ورزش":"کار"),hours:isFinite(hrs)?hrs:0});
-  $(`${lp}-label`).value="";$(`${lp}-hrs`).value="";renderItems(kind);commit();}
-$("b-add").onclick=()=>addItem("breaks");$("e-add").onclick=()=>addItem("ext");
-$("b-hrs").addEventListener("keydown",e=>{if(e.key==="Enter")addItem("breaks");});
-$("e-hrs").addEventListener("keydown",e=>{if(e.key==="Enter")addItem("ext");});
-$("d-desc").addEventListener("input",e=>{curDay.desc=e.target.value;commitDebounced();});
+
+// ---- externals: single ساعت field ----
+function addExt(){const label=$("e-label").value.trim();const hrs=Number(toEn($("e-hrs").value));if(!label&&!hrs)return;
+  curDay.externals.push({label:label||"کار",hours:isFinite(hrs)?hrs:0});
+  $("e-label").value="";$("e-hrs").value="";renderItems("ext");commit();}
+
+// ---- breaks: ساعت OR دقیقه (whichever is filled disables the other) ----
+function addBreak(){
+  const label=$("b-label").value.trim();
+  const hr=Number(toEn($("b-hr").value))||0;
+  const min=Number(toEn($("b-min").value))||0;
+  const hours = hr>0 ? hr : min/60;
+  if(!label && !hours) return;
+  curDay.breaks.push({label:label||"ورزش",hours:Math.round(hours*100)/100});
+  $("b-label").value="";$("b-hr").value="";$("b-min").value="";
+  $("b-hr").disabled=false;$("b-min").disabled=false;
+  renderItems("breaks");commit();
+}
+function linkExclusive(aId,bId){                 // filling one disables the other
+  const a=$(aId),b=$(bId);
+  a.addEventListener("input",()=>{b.disabled=a.value.trim()!=="";});
+  b.addEventListener("input",()=>{a.disabled=b.value.trim()!=="";});
+}
+linkExclusive("b-hr","b-min");
+$("b-add").onclick=addBreak;$("e-add").onclick=addExt;
+$("b-min").addEventListener("keydown",e=>{if(e.key==="Enter")addBreak();});
+$("b-hr").addEventListener("keydown",e=>{if(e.key==="Enter")addBreak();});
+$("e-hrs").addEventListener("keydown",e=>{if(e.key==="Enter")addExt();});
+$("d-desc").addEventListener("input",e=>{curDay.desc=e.target.value;if(e.target.value.trim()){$("d-desc").classList.remove("warn");$("desc-warn").classList.add("hide");}commitDebounced();});
 $("dayPrev").onclick=()=>{cur=new Date(cur.getTime()-864e5);loadToday();};
 $("dayNext").onclick=()=>{cur=new Date(cur.getTime()+864e5);loadToday();};
 $("d-backToday").onclick=()=>{cur=todayUTC();loadToday();};
