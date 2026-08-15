@@ -158,10 +158,7 @@
 <div class="app">
   <div class="top">
     <div class="brand"><div class="mark"></div><div><h1>دفتر کار روزانه</h1><p>ثبت روی سرور، ورود سریع با اثر انگشت</p></div></div>
-    <div style="display:flex;align-items:center">
-      <button class="lock-btn" id="btnLock" title="قفل کردن">🔒</button>
-      <button class="gear" id="btnSettings" title="اتصال و امنیت">⚙</button>
-    </div>
+    <button class="gear" id="btnSettings" title="وضعیت اتصال">⚙</button>
   </div>
 
   <div class="setup-banner hide" id="setupBanner">
@@ -268,37 +265,13 @@
   </section>
 </div>
 
-<div id="lock" class="hide">
-  <div class="lockcard" id="lockcard">
-    <div class="mk2"></div>
-    <h2 id="lock-title">ورود</h2>
-    <p id="lock-sub">رمز عبور را وارد کن</p>
-    <button class="fp primary hide" id="lock-fp">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 11c0 4-1 6-2 8M7 8a7 7 0 0 1 10 2M5 12a10 10 0 0 1 .5-4M9 20c1-2 1.5-4 1.5-7a1.5 1.5 0 0 1 3 0c0 1 0 2-.2 3M16 18c.5-2 .6-4 .4-6"/></svg>
-      ورود با اثر انگشت
-    </button>
-    <input class="pin" id="lock-pin" type="password" inputmode="numeric" placeholder="••••" autocomplete="off">
-    <input class="pin hide" id="lock-pin2" type="password" inputmode="numeric" placeholder="تکرار رمز" autocomplete="off" style="margin-top:10px">
-    <button class="btn btn-primary" id="lock-go">ورود</button>
-    <div class="lockerr" id="lock-err"></div>
-  </div>
-</div>
-
 <dialog id="dlg">
-  <div class="dlg-head">اتصال و امنیت</div>
+  <div class="dlg-head">وضعیت اتصال</div>
   <div class="dlg-body">
-    <div class="field"><label>آدرس وب‌اپ سرور (لینک <code>/exec</code>)</label><input id="apiUrl" placeholder="https://script.google.com/macros/s/…/exec"></div>
-    <div class="field"><label>رمز سرور (همان SECRET در Code.gs)</label><input id="apiToken" type="password" placeholder="رمز سرور"></div>
-    <button class="btn btn-ghost" id="btnPing">بررسی اتصال</button>
-    <p class="hint">داده روی سرور ذخیره می‌شود و بدون این رمز، هیچ درخواستی از بیرون پذیرفته نمی‌شود. رمز فقط روی همین دستگاه نگه داشته می‌شود.</p>
-    <div class="sett-block">
-      <label style="font-size:13px;font-weight:700">قفل ورود</label>
-      <button class="btn btn-ghost" id="setPin">تعیین/تغییر رمز ورود</button>
-      <button class="btn btn-ghost" id="toggleFp">فعال‌کردن اثر انگشت روی این دستگاه</button>
-      <p class="hint">اثر انگشت سریع‌ترین راه ورود است و فقط روی همین دستگاه کار می‌کند (نیازمند HTTPS و حسگر بیومتریک). رمز، راه پشتیبان است.</p>
-    </div>
+    <p class="hint">آدرس سرور و رمز از قبل داخل برنامه تنظیم شده‌اند و نیازی به کاری نیست. برای اطمینان می‌توانی اتصال را بررسی کنی.</p>
+    <button class="btn btn-primary" id="btnPing">بررسی اتصال</button>
   </div>
-  <div class="dlg-foot"><button class="btn btn-ghost" id="dlgClose">بستن</button><button class="btn btn-primary" id="dlgSave">ذخیره</button></div>
+  <div class="dlg-foot"><button class="btn btn-ghost" id="dlgClose">بستن</button></div>
 </dialog>
 
 <script>
@@ -332,8 +305,9 @@ function keyJ(dt){const j=jOf(dt);return`${j.jy}_${j.jm}_${j.jd}`;}
 const sameDay=(a,b)=>a.getTime()===b.getTime();
 
 let cur=todayUTC(), calJ=jOf(cur);
-const DEFAULT_API="https://script.google.com/macros/s/AKfycbyeC-FQdTX-sVj82RApj0mFlaL5I-QvZJ0Fe4omEIFG_mVQNHLupvpwSdPRXebo1yaohA/exec";
-const cfg=()=>({url:localStorage.getItem("wl_api")||DEFAULT_API,token:localStorage.getItem("wl_token")||""});
+const API_URL="https://script.google.com/macros/s/AKfycbyeC-FQdTX-sVj82RApj0mFlaL5I-QvZJ0Fe4omEIFG_mVQNHLupvpwSdPRXebo1yaohA/exec";
+const API_TOKEN="behrad1383";
+const cfg=()=>({url:API_URL,token:API_TOKEN});
 const getRate=()=>Number(toEn(localStorage.getItem("wl_rate")||"180000"))||180000;
 const setRate=r=>localStorage.setItem("wl_rate",String(r));
 
@@ -551,77 +525,23 @@ function switchView(v){
 }
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>switchView(b.dataset.v));
 
-/* ===== settings ===== */
-function refreshBanner(){const c=cfg();$("setupBanner").classList.toggle("hide",!!(c.url&&c.token));}
-$("btnSettings").onclick=()=>{const c=cfg();$("apiUrl").value=c.url;$("apiToken").value=c.token;refreshFpLabel();$("dlg").showModal();};
+/* ===== settings (connection check only) ===== */
+function refreshBanner(){$("setupBanner").classList.add("hide");}
+$("btnSettings").onclick=()=>$("dlg").showModal();
 $("setupOpen").onclick=()=>$("btnSettings").click();
 $("dlgClose").onclick=()=>$("dlg").close();
-$("dlgSave").onclick=()=>{localStorage.setItem("wl_api",$("apiUrl").value.trim());localStorage.setItem("wl_token",$("apiToken").value.trim());$("dlg").close();refreshBanner();loadToday();};
 $("btnPing").onclick=async()=>{
-  localStorage.setItem("wl_api",$("apiUrl").value.trim());localStorage.setItem("wl_token",$("apiToken").value.trim());
-  try{await api("ping",{});alert("اتصال و رمز درست است ✓");refreshBanner();}
-  catch(e){alert("اتصال/رمز نادرست: "+e.message);}
+  const b=$("btnPing");b.textContent="در حال بررسی…";
+  try{await api("ping",{});b.textContent="اتصال برقرار است ✓";}
+  catch(e){b.textContent="اتصال برقرار نشد — دوباره تلاش کن";alert("اتصال برقرار نشد.\n"+e.message+"\n\nاگر رمز را در Code.gs عوض کرده‌ای، حتماً یک‌بار دوباره Deploy کن (Manage deployments → Edit → New version → Deploy).");}
 };
 
-/* ===== lock: PIN + fingerprint ===== */
-const bufToB64=b=>btoa(String.fromCharCode(...new Uint8Array(b)));
-const b64ToBuf=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0)).buffer;
-async function sha(salt,pin){const h=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(salt+"|"+pin));return bufToB64(h);}
-const pinStore=()=>{try{return JSON.parse(localStorage.getItem("wl_pin")||"null");}catch(e){return null;}};
-async function savePin(pin){const salt=bufToB64(crypto.getRandomValues(new Uint8Array(12)));localStorage.setItem("wl_pin",JSON.stringify({salt,hash:await sha(salt,pin)}));}
-async function checkPin(pin){const s=pinStore();if(!s)return false;return(await sha(s.salt,pin))===s.hash;}
-let lockMode="enter";
-function showLock(mode){
-  lockMode=mode;$("lock").classList.remove("hide");$("lock-err").textContent="";$("lock-pin").value="";$("lock-pin2").value="";
-  const setting=mode==="set";
-  $("lock-title").textContent=setting?"تعیین رمز":"ورود";
-  $("lock-sub").textContent=setting?"یک رمز عددی (حداقل ۴ رقم) انتخاب کن":"با اثر انگشت یا رمز وارد شو";
-  $("lock-pin").placeholder=setting?"رمز جدید":"••••";
-  $("lock-pin2").classList.toggle("hide",!setting);
-  $("lock-go").textContent=setting?"ذخیره و ورود":"ورود با رمز";
-  $("lock-fp").classList.toggle("hide",setting||!localStorage.getItem("wl_fp"));
-  setTimeout(()=>{if(!setting&&localStorage.getItem("wl_fp"))return;$("lock-pin").focus();},50);
-}
-function unlock(){$("lock").classList.add("hide");flushPending();}
-function lockErr(m){const e=$("lock-err");e.textContent=m;const c=$("lockcard");c.classList.remove("shake");void c.offsetWidth;c.classList.add("shake");}
-$("lock-go").onclick=async()=>{
-  const pin=toEn($("lock-pin").value).trim();
-  if(lockMode==="set"){const p2=toEn($("lock-pin2").value).trim();
-    if(pin.length<4){lockErr("رمز حداقل ۴ رقم باشد.");return;}
-    if(pin!==p2){lockErr("رمز و تکرارش یکی نیست.");return;}
-    await savePin(pin);unlock();
-  }else{if(await checkPin(pin))unlock();else lockErr("رمز اشتباه است.");}
-};
-$("lock-pin").addEventListener("keydown",e=>{if(e.key==="Enter"){if(lockMode==="set")$("lock-pin2").focus();else $("lock-go").click();}});
-$("lock-pin2").addEventListener("keydown",e=>{if(e.key==="Enter")$("lock-go").click();});
-async function fpRegister(){const cred=await navigator.credentials.create({publicKey:{
-  challenge:crypto.getRandomValues(new Uint8Array(32)),rp:{name:"دفتر کار روزانه"},
-  user:{id:crypto.getRandomValues(new Uint8Array(16)),name:"user",displayName:"کاربر"},
-  pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
-  authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required"},timeout:60000,attestation:"none"}});
-  localStorage.setItem("wl_fp",bufToB64(cred.rawId));}
-async function fpUnlock(){const id=localStorage.getItem("wl_fp");if(!id)throw new Error("no-fp");
-  await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),
-    allowCredentials:[{type:"public-key",id:b64ToBuf(id),transports:["internal"]}],userVerification:"required",timeout:60000}});return true;}
-$("lock-fp").onclick=async()=>{try{await fpUnlock();unlock();}catch(e){lockErr("اثر انگشت تأیید نشد؛ با رمز وارد شو.");}};
-$("btnLock").onclick=()=>showLock("enter");
-$("setPin").onclick=()=>{$("dlg").close();showLock("set");};
-async function fpAvailable(){try{return window.PublicKeyCredential&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();}catch(e){return false;}}
-$("toggleFp").onclick=async()=>{
-  if(localStorage.getItem("wl_fp")){localStorage.removeItem("wl_fp");refreshFpLabel();return;}
-  if(!await fpAvailable()){alert("این دستگاه/مرورگر از اثر انگشت پشتیبانی نمی‌کند (نیازمند HTTPS و حسگر بیومتریک).");return;}
-  try{await fpRegister();refreshFpLabel();alert("اثر انگشت روی این دستگاه فعال شد.");}catch(e){alert("ثبت اثر انگشت انجام نشد.");}
-};
-async function refreshFpLabel(){const on=!!localStorage.getItem("wl_fp");$("toggleFp").textContent=on?"غیرفعال‌کردن اثر انگشت":"فعال‌کردن اثر انگشت روی این دستگاه";if(!on&&!await fpAvailable())$("toggleFp").classList.add("hide");else $("toggleFp").classList.remove("hide");}
-async function gate(){
-  if(!pinStore()&&!localStorage.getItem("wl_fp")){showLock("set");}
-  else{showLock("enter");if(localStorage.getItem("wl_fp")){try{await fpUnlock();unlock();}catch(e){}}}
-  refreshFpLabel();
-}
-window.addEventListener("focus",()=>{flushPending();const t=todayUTC();if(!$("v-today").classList.contains("hide")&&sameDay(cur,new Date(t.getTime()-864e5))){/* keep viewing yesterday */}});
+/* clean up any old lock/config leftovers from previous versions */
+["wl_pin","wl_fp","wl_api","wl_token"].forEach(k=>localStorage.removeItem(k));
+window.addEventListener("focus",()=>flushPending());
 
 /* ===== init ===== */
-fillMonthSelect();refreshBanner();loadToday();gate();
+fillMonthSelect();refreshBanner();loadToday();
 </script>
 </body>
 </html>
