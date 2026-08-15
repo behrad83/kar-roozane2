@@ -230,6 +230,10 @@
 
       <div class="sync" id="sync"></div>
       <div class="daytotal"><div class="k">جمع کل امروز</div><div class="v"><span id="d-total">۰</span> <small>ساعت</small></div></div>
+      <div style="display:flex;gap:10px;padding:14px 16px">
+        <button class="btn btn-primary" id="saveDay" style="flex:1">ذخیره در سرور</button>
+        <button class="btn btn-ghost" id="delDay" style="color:var(--warn);border-color:var(--warn)">پاک کردن این روز</button>
+      </div>
     </div>
   </section>
 
@@ -321,7 +325,15 @@ function dayTotal(day){return round2(attHours(day)-sumH(day.breaks)+sumH(day.ext
 
 /* ===== local cache + server sync ===== */
 function blankDay(){return{start:"",end:"",breaks:[],externals:[],desc:""};}
-function norm(d){d=d||{};return{start:d.start||"",end:d.end||"",breaks:d.breaks||[],externals:d.externals||[],desc:d.desc||""};}
+function cleanTime(v){
+  v=toEn(String(v==null?"":v)).trim();
+  if(!v) return "";
+  let m=v.match(/T(\d{1,2}):(\d{2})/);           // ISO datetime -> HH:MM after "T"
+  if(m) return (+m[1])+":"+m[2];
+  m=v.match(/(\d{1,2}):(\d{2})/);                 // already H:MM
+  return m?(+m[1])+":"+m[2]:"";
+}
+function norm(d){d=d||{};return{start:cleanTime(d.start),end:cleanTime(d.end),breaks:d.breaks||[],externals:d.externals||[],desc:d.desc||""};}
 const cacheKey=dt=>"wl_c_"+keyJ(dt);
 function readCache(dt){try{const s=localStorage.getItem(cacheKey(dt));return s?norm(JSON.parse(s)):blankDay();}catch(e){return blankDay();}}
 function writeCache(dt,day){localStorage.setItem(cacheKey(dt),JSON.stringify(day));}
@@ -453,6 +465,12 @@ $("d-desc").addEventListener("input",e=>{curDay.desc=e.target.value;commitDeboun
 $("dayPrev").onclick=()=>{cur=new Date(cur.getTime()-864e5);loadToday();};
 $("dayNext").onclick=()=>{cur=new Date(cur.getTime()+864e5);loadToday();};
 $("d-backToday").onclick=()=>{cur=todayUTC();loadToday();};
+$("saveDay").onclick=async()=>{const b=$("saveDay");b.textContent="در حال ذخیره…";writeCache(cur,curDay);await pushDay(cur,curDay);b.textContent="ذخیره در سرور";};
+$("delDay").onclick=async()=>{
+  if(!confirm("همهٔ دادهٔ این روز پاک شود؟"))return;
+  curDay=blankDay();writeCache(cur,curDay);renderDay();
+  await pushDay(cur,curDay);   // empty day => server deletes the row
+};
 
 /* ===== CALENDAR ===== */
 async function renderCal(){
