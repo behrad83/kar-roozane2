@@ -305,7 +305,7 @@ function keyJ(dt){const j=jOf(dt);return`${j.jy}_${j.jm}_${j.jd}`;}
 const sameDay=(a,b)=>a.getTime()===b.getTime();
 
 let cur=todayUTC(), calJ=jOf(cur);
-const API_URL="https://script.google.com/macros/s/AKfycbyeC-FQdTX-sVj82RApj0mFlaL5I-QvZJ0Fe4omEIFG_mVQNHLupvpwSdPRXebo1yaohA/exec";
+const API_URL="https://script.google.com/macros/s/AKfycbzp3H2EuDXUk6H-S7mqAzBN9o8i6U7ozkw73WbSvmteukZiq9Iur2GuolD3dctljgjeNQ/exec";
 const API_TOKEN="behrad1383";
 const cfg=()=>({url:API_URL,token:API_TOKEN});
 const getRate=()=>Number(toEn(localStorage.getItem("wl_rate")||"180000"))||180000;
@@ -396,9 +396,44 @@ function commit(){writeCache(cur,curDay);renderHero();pushDay(cur,curDay);}
 let descT;
 function commitDebounced(){writeCache(cur,curDay);renderHero();clearTimeout(descT);descT=setTimeout(()=>pushDay(cur,curDay),700);}
 
+function fmtTimeInput(raw){
+  // digits only, max 4. While typing: last 2 digits = minutes, rest = hours.
+  // 230 -> 2:30 , 2205 -> 22:05 , 8 -> 8 , 18 -> 18
+  let d=toEn(raw).replace(/[^0-9]/g,"").slice(0,4);
+  if(d.length<=2) return d;
+  return d.slice(0,d.length-2)+":"+d.slice(d.length-2);
+}
+function normalizeTime(raw){
+  raw=toEn(String(raw)).trim();
+  if(raw==="") return "";
+  let h,m;
+  if(raw.includes(":")){
+    const p=raw.split(":"); h=p[0].replace(/\D/g,""); m=(p[1]||"").replace(/\D/g,"");
+  }else{
+    const d=raw.replace(/\D/g,"").slice(0,4);
+    if(d.length<=2){h=d;m="";}else{h=d.slice(0,d.length-2);m=d.slice(d.length-2);}
+  }
+  h=Math.min(parseInt(h||"0",10)||0,23);
+  if(m===""){m="00";}else{m=m.slice(0,2);if(m.length===1)m="0"+m;if(parseInt(m,10)>59)m="59";}
+  return h+":"+m;
+}
 ["start","end"].forEach(w=>{
   $(`c-${w}-clear`).onclick=()=>{if(w==="start")curDay.start="";else curDay.end="";$(`c-${w}-manual`).value="";setClock(w);commit();};
-  $(`c-${w}-manual`).addEventListener("input",e=>{const norm=toEn(e.target.value).trim().replace(/[.\-،]/g,":");if(w==="start")curDay.start=norm;else curDay.end=norm;setClock(w);commitDebounced();});
+  const inp=$(`c-${w}-manual`);
+  inp.addEventListener("input",e=>{
+    const t=fmtTimeInput(e.target.value);
+    e.target.value=toFa(t);
+    if(w==="start")curDay.start=t;else curDay.end=t;
+    setClock(w);commitDebounced();
+  });
+  const finish=()=>{                                  // on blur / Enter: complete short entries
+    const t=normalizeTime(inp.value);
+    inp.value=t?toFa(t):"";
+    if(w==="start")curDay.start=t;else curDay.end=t;
+    setClock(w);commit();
+  };
+  inp.addEventListener("blur",finish);
+  inp.addEventListener("keydown",e=>{if(e.key==="Enter"){finish();inp.blur();}});
 });
 function renderItems(kind){
   const list=kind==="breaks"?curDay.breaks:curDay.externals;
