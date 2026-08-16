@@ -62,7 +62,7 @@
   details.adv>summary::-webkit-details-marker{display:none}
   details.adv>summary::before{content:"▾";transition:.2s}
   details.adv[open]>summary::before{transform:rotate(180deg)}
-  .clocks{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 16px 16px}
+  .clocks{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;padding:0 16px 16px}
   .clock{border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center;background:#FBFDFD}
   .clock .lbl{font-size:12px;color:var(--muted);margin-bottom:7px}
   .clock .val{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;min-height:30px}
@@ -114,9 +114,9 @@
 
   .calhead{display:flex;align-items:center;justify-content:space-between;padding:14px 16px}
   .calhead .m{font-size:18px;font-weight:700}
-  .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:0 16px 16px}
+  .calgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;padding:0 16px 16px}
   .calgrid .wl{text-align:center;font-size:12px;color:var(--muted);padding:6px 0}
-  .cell{aspect-ratio:1;border:1px solid var(--line);border-radius:11px;background:#FBFDFD;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;font-size:15px;font-variant-numeric:tabular-nums;transition:.12s}
+  .cell{aspect-ratio:1;min-width:0;border:1px solid var(--line);border-radius:11px;background:#FBFDFD;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;font-size:15px;font-variant-numeric:tabular-nums;transition:.12s}
   .cell:hover{border-color:var(--accent);background:var(--accent-soft)}
   .cell.blank{border:none;background:transparent;cursor:default}
   .cell.today{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
@@ -124,7 +124,7 @@
   .cell.fri{color:var(--warn)}
   .cell .mk{position:absolute;bottom:7px;width:5px;height:5px;border-radius:50%;background:var(--accent)}
   .cell.sel .mk{background:#fff}
-  .cell .hh{font-size:10px;color:var(--muted);margin-top:1px;direction:ltr;unicode-bidi:isolate}.cell.sel .hh{color:#D3ECEE}
+  .cell .hh{font-size:10px;color:var(--muted);margin-top:1px;direction:ltr;unicode-bidi:isolate;max-width:100%;overflow:hidden;white-space:nowrap}.cell.sel .hh{color:#D3ECEE}
   .calnote{padding:0 16px 14px;font-size:12px;color:var(--muted)}
 
   .mv-controls{display:flex;gap:10px;flex-wrap:wrap;padding:16px}
@@ -156,6 +156,24 @@
   code{background:#EEF2F4;padding:1px 6px;border-radius:5px;font-size:12px;direction:ltr;display:inline-block}
   .sett-block{border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px}
   .hide{display:none!important}
+
+  @media(max-width:480px){
+    .app{padding:14px 10px 90px}
+    .tabs button{font-size:13px;padding:8px 4px}
+    .dayhead{padding:12px 10px}
+    .hero{padding:16px 12px}
+    .sect{padding:14px 12px}
+    .clocks{gap:10px;padding:0 12px 12px}
+    .clock{padding:10px}
+    .clock .val{font-size:20px}
+    .calhead{padding:12px 10px}
+    .calgrid{gap:4px;padding:0 10px 12px}
+    .cell{font-size:13px;border-radius:9px}
+    .cell .hh{font-size:9px}
+    .calgrid .wl{font-size:11px}
+    .daytotal{padding:14px 12px}
+    .mv-controls,.mstats,.mv-actions{padding-left:12px;padding-right:12px}
+  }
 
   #lock{position:fixed;inset:0;z-index:100;background:linear-gradient(160deg,#0E7C86,#0A5A62);display:flex;align-items:center;justify-content:center;padding:20px}
   .lockcard{background:var(--surface);border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.3);width:100%;max-width:340px;padding:26px 22px;text-align:center}
