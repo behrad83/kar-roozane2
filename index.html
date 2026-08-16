@@ -126,6 +126,10 @@
   .cell.sel .mk{background:#fff}
   .cell .hh{font-size:10px;color:var(--muted);margin-top:1px;direction:ltr;unicode-bidi:isolate;max-width:100%;overflow:hidden;white-space:nowrap}.cell.sel .hh{color:#D3ECEE}
   .calnote{padding:0 16px 14px;font-size:12px;color:var(--muted)}
+  .cal-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:14px 16px 4px;border-top:1px solid var(--line);margin-top:4px}
+  .cs-item{background:#FBFDFD;border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center}
+  .cs-k{font-size:11px;color:var(--muted)}
+  .cs-v{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px;direction:ltr;unicode-bidi:isolate}
 
   .mv-controls{display:flex;gap:10px;flex-wrap:wrap;padding:16px}
   .field{display:flex;flex-direction:column;gap:4px}
@@ -233,7 +237,7 @@
         <div class="netline">حضور خالص تا این لحظه: <b id="hero-net">۰</b> ساعت</div>
       </div>
 
-      <details class="adv">
+      <details class="adv" open>
         <summary>اصلاح دستی ساعت ورود/خروج</summary>
         <div class="clocks">
           <div class="clock">
@@ -274,6 +278,7 @@
         <h3>شرح کار امروز</h3>
         <textarea id="d-desc" placeholder="کارهای داخل ساعت حضور…"></textarea>
         <div id="desc-warn" class="descwarn hide">⚠ توضیحات کارِ امروز را ننوشتی. اگر عمدی است اشکالی ندارد، ولی بهتر است پرش کنی.</div>
+        <button class="btn btn-ghost" id="fixSpell" style="margin-top:10px;font-size:13px;padding:8px 14px">اصلاح املای رایج</button>
       </div>
 
       <div class="sync" id="sync"></div>
@@ -290,7 +295,8 @@
     <div class="card">
       <div class="calhead"><button class="nav" id="calNext">›</button><div class="m" id="cal-title">—</div><button class="nav" id="calPrev">‹</button></div>
       <div class="calgrid" id="cal-grid"></div>
-      <div class="calnote">روی هر روز بزن تا پروفایلش باز شود و بتوانی ثبت/ویرایش کنی.</div>
+      <div class="cal-summary" id="cal-summary"></div>
+      <div class="calnote">روی هر روز بزن تا پروفایلش باز شود و بتوانی ثبت/ویرایش کنی. رنگ سبزتر = ساعت کاری بیشتر.</div>
     </div>
   </section>
 
@@ -569,6 +575,21 @@ $("b-min").addEventListener("keydown",e=>{if(e.key==="Enter")addBreak();});
 $("b-hr").addEventListener("keydown",e=>{if(e.key==="Enter")addBreak();});
 $("e-hrs").addEventListener("keydown",e=>{if(e.key==="Enter")addExt();});
 $("d-desc").addEventListener("input",e=>{curDay.desc=e.target.value;if(e.target.value.trim()){$("d-desc").classList.remove("warn");$("desc-warn").classList.add("hide");}commitDebounced();});
+const SPELL={ "دندون":"دندان","براورد":"برآورد","برسی":"بررسی","تعوض":"تعویض","قاللب":"قالب",
+  "باطری":"باتری","پیرینت":"پرینت","رکتور":"راکتور","ازمایشگاه":"آزمایشگاه","اماده":"آماده",
+  "اماده‌سازی":"آماده‌سازی","تنظمات":"تنظیمات","اسلایز":"اسلایس","نضافت":"نظافت","اوسکویی":"اسکویی",
+  "خشاب":"خشاب","فاکنو":"فاکنو","برادرد":"برآورد","سنباده":"سنباده","کریمی":"کریمی","تظر":"نظر" };
+function fixSpelling(t){
+  let s=t;
+  for(const k in SPELL){ if(k===SPELL[k]) continue; s=s.split(k).join(SPELL[k]); }
+  return s;
+}
+$("fixSpell").onclick=()=>{
+  const before=$("d-desc").value, after=fixSpelling(before);
+  if(after===before){$("fixSpell").textContent="چیزی برای اصلاح نبود ✓";}
+  else{$("d-desc").value=after;curDay.desc=after;commit();$("fixSpell").textContent="اصلاح شد ✓";}
+  setTimeout(()=>$("fixSpell").textContent="اصلاح املای رایج",2000);
+};
 $("dayPrev").onclick=()=>{cur=new Date(cur.getTime()-864e5);loadToday();};
 $("dayNext").onclick=()=>{cur=new Date(cur.getTime()+864e5);loadToday();};
 $("d-backToday").onclick=()=>{cur=todayUTC();loadToday();};
@@ -580,6 +601,12 @@ $("delDay").onclick=async()=>{
 };
 
 /* ===== CALENDAR ===== */
+function heatColor(h){                          // میزان ساعت → شدت رنگ سبز
+  if(h<=0) return "";
+  const t=Math.max(0,Math.min(1,h/11));         // ~۱۱ ساعت = پررنگ‌ترین
+  const alpha=(0.12+t*0.78).toFixed(2);
+  return `background:rgba(14,124,134,${alpha});border-color:rgba(14,124,134,${(0.3+t*0.5).toFixed(2)})`;
+}
 async function renderCal(){
   $("cal-title").textContent=`${MONTHS[calJ.jm-1]} ${toFa(calJ.jy)}`;
   const grid=$("cal-grid");grid.innerHTML="";
@@ -587,19 +614,26 @@ async function renderCal(){
   const first=dateOfJ(calJ.jy,calJ.jm,1),lead=(first.getUTCDay()+1)%7;
   for(let i=0;i<lead;i++){const b=document.createElement("div");b.className="cell blank";grid.appendChild(b);}
   const n=daysInJ(calJ.jy,calJ.jm),today=todayUTC(),selJ=jOf(cur);
-  // fetch month from server for marks
   let map={};
   try{const d=await api("getMonth",{jy:calJ.jy,jm:calJ.jm});(d.days||[]).forEach(x=>{map[x.jd]=norm(x);writeCache(dateOfJ(calJ.jy,calJ.jm,x.jd),norm(x));});}catch(e){}
+  let daysWorked=0,totalH=0;
   for(let dd=1;dd<=n;dd++){
     const dt=dateOfJ(calJ.jy,calJ.jm,dd);const cell=document.createElement("div");cell.className="cell";
+    const day=map[dd]||readCache(dt);
+    const has=dayHasData(day), tot=has?dayTotal(day):0;
+    if(has){daysWorked++;totalH+=tot; const s=heatColor(tot); if(s)cell.setAttribute("style",s);}
     if(dt.getUTCDay()===5)cell.classList.add("fri");
     if(sameDay(dt,today))cell.classList.add("today");
     if(selJ.jy===calJ.jy&&selJ.jm===calJ.jm&&selJ.jd===dd)cell.classList.add("sel");
-    const day=map[dd]||readCache(dt);
     let inner=`<span>${toFa(dd)}</span>`;
-    if(dayHasData(day))inner+=`<span class="hh">${faN(dayTotal(day),1)}</span><span class="mk"></span>`;
+    if(has)inner+=`<span class="hh">${faN(tot,1)}</span>`;      // فقط جمع ساعت، بدون نقطه
     cell.innerHTML=inner;cell.onclick=()=>{cur=dt;switchView("today");loadToday();};grid.appendChild(cell);
   }
+  // جمع‌بندی پایین تقویم
+  $("cal-summary").innerHTML =
+    `<div class="cs-item"><div class="cs-k">روزهای کارکرد</div><div class="cs-v">${toFa(daysWorked)}</div></div>`+
+    `<div class="cs-item"><div class="cs-k">جمع ساعت ماه</div><div class="cs-v">${faN(totalH,1)||"۰"}</div></div>`+
+    `<div class="cs-item"><div class="cs-k">میانگین روزانه</div><div class="cs-v">${daysWorked?faN(totalH/daysWorked,1):"۰"}</div></div>`;
 }
 $("calPrev").onclick=()=>{calJ.jm--;if(calJ.jm<1){calJ.jm=12;calJ.jy--;}renderCal();};
 $("calNext").onclick=()=>{calJ.jm++;if(calJ.jm>12){calJ.jm=1;calJ.jy++;}renderCal();};
