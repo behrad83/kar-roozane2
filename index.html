@@ -124,6 +124,12 @@
   .cell.fri{color:var(--warn)}
   .cell .mk{position:absolute;bottom:7px;width:5px;height:5px;border-radius:50%;background:var(--accent)}
   .cell.sel .mk{background:#fff}
+  .cell.holi::before{content:"";position:absolute;top:5px;left:5px;width:6px;height:6px;border-radius:50%;background:var(--warn)}
+  .cell.sel.holi::before{background:#fff}
+  .cell .mk-ev{position:absolute;bottom:6px;width:5px;height:5px;border-radius:50%;background:#E08A1E}
+  .cell.sel .mk-ev{background:#fff}
+  .d-holi{font-size:12px;margin-top:5px;color:#E08A1E;font-weight:600;line-height:1.5;padding:0 6px}
+  .d-holi.holi{color:var(--warn)}
   .cell .hh{font-size:10px;color:var(--muted);margin-top:1px;direction:ltr;unicode-bidi:isolate;max-width:100%;overflow:hidden;white-space:nowrap}.cell.sel .hh{color:#D3ECEE}
   .calnote{padding:0 16px 14px;font-size:12px;color:var(--muted)}
   .cal-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:14px 16px 4px;border-top:1px solid var(--line);margin-top:4px}
@@ -225,6 +231,7 @@
       <div class="center">
         <div class="wd" id="d-wd">—</div>
         <div class="full" id="d-full">—</div>
+        <div class="d-holi hide" id="d-holi"></div>
         <button class="today-chip hide" id="d-backToday">↺ برگشت به امروز</button>
       </div>
       <button class="nav" id="dayPrev" title="روز قبل">‹</button>
@@ -386,6 +393,7 @@ function keyJ(dt){const j=jOf(dt);return`${j.jy}_${j.jm}_${j.jd}`;}
 const sameDay=(a,b)=>a.getTime()===b.getTime();
 
 let cur=todayUTC(), calJ=jOf(cur);
+let holiCache={};
 const API_URL="https://script.google.com/macros/s/AKfycbzp3H2EuDXUk6H-S7mqAzBN9o8i6U7ozkw73WbSvmteukZiq9Iur2GuolD3dctljgjeNQ/exec";
 const API_TOKEN="behrad1383";
 const cfg=()=>({url:API_URL,token:API_TOKEN});
@@ -410,7 +418,7 @@ function cleanTime(v){
   m=v.match(/(\d{1,2}):(\d{2})/);                 // already H:MM
   return m?(+m[1])+":"+m[2]:"";
 }
-function norm(d){d=d||{};return{start:cleanTime(d.start),end:cleanTime(d.end),breaks:d.breaks||[],externals:d.externals||[],desc:d.desc||""};}
+function norm(d){d=d||{};return{jd:d.jd,start:cleanTime(d.start),end:cleanTime(d.end),breaks:d.breaks||[],externals:d.externals||[],desc:d.desc||""};}
 const cacheKey=dt=>"wl_c_"+keyJ(dt);
 function readCache(dt){try{const s=localStorage.getItem(cacheKey(dt));return s?norm(JSON.parse(s)):blankDay();}catch(e){return blankDay();}}
 function writeCache(dt,day){localStorage.setItem(cacheKey(dt),JSON.stringify(day));}
@@ -451,6 +459,7 @@ async function loadToday(){
   const j=jOf(cur);
   $("d-wd").textContent=wdOf(cur);
   $("d-full").textContent=`${toFa(j.jd)} ${MONTHS[j.jm-1]} ${toFa(j.jy)}`;
+  showDayHoliday(j);
   $("d-backToday").classList.toggle("hide",sameDay(cur,todayUTC()));
   curDay=readCache(cur);
   renderDay();
@@ -459,6 +468,18 @@ async function loadToday(){
   if(c.url&&c.token&&!hasPending(keyJ(cur))){
     try{const d=await api("getDay",jparts(cur));curDay=norm(d.day);writeCache(cur,curDay);renderDay();}
     catch(e){syncMsg("اتصال به سرور برقرار نشد","bad");}
+  }
+}
+async function showDayHoliday(j){
+  const el=$("d-holi"),key=j.jy+"_"+j.jm;
+  el.classList.add("hide");el.textContent="";
+  let m=holiCache[key];
+  if(!m){try{const h=await api("holidays",{jy:j.jy,jm:j.jm});m=h.days||{};holiCache[key]=m;}catch(e){m={};}}
+  const hi=m[j.jd];
+  if(hi&&hi.e){
+    el.textContent=(hi.h?"🔴 ":"")+hi.e.replace(/\s*\|\s*/g,"، ");
+    el.classList.toggle("holi",!!hi.h);
+    el.classList.remove("hide");
   }
 }
 function renderDay(){
@@ -575,13 +596,33 @@ $("b-min").addEventListener("keydown",e=>{if(e.key==="Enter")addBreak();});
 $("b-hr").addEventListener("keydown",e=>{if(e.key==="Enter")addBreak();});
 $("e-hrs").addEventListener("keydown",e=>{if(e.key==="Enter")addExt();});
 $("d-desc").addEventListener("input",e=>{curDay.desc=e.target.value;if(e.target.value.trim()){$("d-desc").classList.remove("warn");$("desc-warn").classList.add("hide");}commitDebounced();});
-const SPELL={ "دندون":"دندان","براورد":"برآورد","برسی":"بررسی","تعوض":"تعویض","قاللب":"قالب",
-  "باطری":"باتری","پیرینت":"پرینت","رکتور":"راکتور","ازمایشگاه":"آزمایشگاه","اماده":"آماده",
-  "اماده‌سازی":"آماده‌سازی","تنظمات":"تنظیمات","اسلایز":"اسلایس","نضافت":"نظافت","اوسکویی":"اسکویی",
-  "خشاب":"خشاب","فاکنو":"فاکنو","برادرد":"برآورد","سنباده":"سنباده","کریمی":"کریمی","تظر":"نظر" };
+const SPELL={
+  // colloquial / typo فنی
+  "دندون":"دندان","براورد":"برآورد","برادرد":"برآورد","برسی":"بررسی","تعوض":"تعویض",
+  "قاللب":"قالب","باطری":"باتری","پیرینت":"پرینت","رکتور":"راکتور","تنظمات":"تنظیمات",
+  "نضافت":"نظافت","اسلایز":"اسلایس","اسلایص":"اسلایس","اوسکویی":"اسکویی","تظر":"نظر",
+  "چراق":"چراغ","اطاق":"اتاق","زخیره":"ذخیره","ذوخت":"دوخت","کوپچه":"کوچه","کوجه":"کوچه",
+  "پردیز":"پردیس","فلامنت":"فیلامنت","فیلمنت":"فیلامنت","فلامینت":"فیلامنت","دستگا":"دستگاه",
+  "خاهش":"خواهش","تلوزیون":"تلویزیون","بلاخره":"بالاخره","مسول":"مسئول","مسولیت":"مسئولیت",
+  "گزاشتن":"گذاشتن","گزاشت":"گذاشت","مدلسازی":"مدل‌سازی","امادسازی":"آماده‌سازی",
+  // آ ابتدای کلمه که با ا نوشته شده
+  "اماده":"آماده","اماده‌سازی":"آماده‌سازی","ازاد":"آزاد","ازمایش":"آزمایش","ازمایشگاه":"آزمایشگاه",
+  "اسان":"آسان","اینده":"آینده","اتش":"آتش","ارام":"آرام","اغاز":"آغاز","اهن":"آهن",
+  "اسمان":"آسمان","اشپزخانه":"آشپزخانه","اویزان":"آویزان","اهنگ":"آهنگ","ارایش":"آرایش",
+  "اسیب":"آسیب","الوده":"آلوده","امار":"آمار","اموزش":"آموزش","انلاین":"آنلاین","اپلود":"آپلود",
+  "اپدیت":"آپدیت","اجیل":"آجیل","اواز":"آواز","اشپز":"آشپز","اویز":"آویز",
+  // تنوین (ـاً) که جا افتاده
+  "واقعا":"واقعاً","واقعن":"واقعاً","حتما":"حتماً","حتمن":"حتماً","مثلا":"مثلاً","مثلن":"مثلاً",
+  "اصلا":"اصلاً","اصلن":"اصلاً","اکثرا":"اکثراً","تقریبا":"تقریباً","دقیقا":"دقیقاً",
+  "مستقیما":"مستقیماً","حدودا":"حدوداً","مجددا":"مجدداً","ضمنا":"ضمناً","فعلا":"فعلاً",
+  "فعلن":"فعلاً","لطفا":"لطفاً","لطفن":"لطفاً","نسبتا":"نسبتاً","کاملا":"کاملاً","کاملن":"کاملاً",
+  "عمدتا":"عمدتاً","تدریجا":"تدریجاً"
+};
 function fixSpelling(t){
-  let s=t;
-  for(const k in SPELL){ if(k===SPELL[k]) continue; s=s.split(k).join(SPELL[k]); }
+  // ۱) حروف عربی → فارسی
+  let s=t.replace(/\u064A/g,"ی").replace(/\u0643/g,"ک").replace(/\u06CC?\u0649/g,"ی");
+  // ۲) اصلاح کلمه‌به‌کلمهٔ کامل (وسط کلمه دست نمی‌خورد)
+  s=s.replace(/[^\s،.؛:!؟()«»\[\]\-\/\\]+/g, w=>Object.prototype.hasOwnProperty.call(SPELL,w)?SPELL[w]:w);
   return s;
 }
 $("fixSpell").onclick=()=>{
@@ -614,26 +655,34 @@ async function renderCal(){
   const first=dateOfJ(calJ.jy,calJ.jm,1),lead=(first.getUTCDay()+1)%7;
   for(let i=0;i<lead;i++){const b=document.createElement("div");b.className="cell blank";grid.appendChild(b);}
   const n=daysInJ(calJ.jy,calJ.jm),today=todayUTC(),selJ=jOf(cur);
-  let map={};
+  let map={},holi={};
   try{const d=await api("getMonth",{jy:calJ.jy,jm:calJ.jm});(d.days||[]).forEach(x=>{map[x.jd]=norm(x);writeCache(dateOfJ(calJ.jy,calJ.jm,x.jd),norm(x));});}catch(e){}
-  let daysWorked=0,totalH=0;
+  try{const h=await api("holidays",{jy:calJ.jy,jm:calJ.jm});holi=h.days||{};holiCache[calJ.jy+"_"+calJ.jm]=holi;}catch(e){holi=holiCache[calJ.jy+"_"+calJ.jm]||{};}
+  let daysWorked=0,totalH=0,holiCount=0;
   for(let dd=1;dd<=n;dd++){
     const dt=dateOfJ(calJ.jy,calJ.jm,dd);const cell=document.createElement("div");cell.className="cell";
     const day=map[dd]||readCache(dt);
     const has=dayHasData(day), tot=has?dayTotal(day):0;
+    const hi=holi[dd]||{}, isFri=dt.getUTCDay()===5;
+    const official=hi.h&&!isFri;                 // تعطیل رسمی (غیر جمعه)
     if(has){daysWorked++;totalH+=tot; const s=heatColor(tot); if(s)cell.setAttribute("style",s);}
-    if(dt.getUTCDay()===5)cell.classList.add("fri");
+    else if(official){cell.setAttribute("style","background:rgba(178,58,72,.10);border-color:rgba(178,58,72,.45)");}
+    if(isFri||hi.h)cell.classList.add("fri");    // عدد قرمز برای هر تعطیل
+    if(official)cell.classList.add("holi");      // نشانِ تعطیل رسمی
     if(sameDay(dt,today))cell.classList.add("today");
     if(selJ.jy===calJ.jy&&selJ.jm===calJ.jm&&selJ.jd===dd)cell.classList.add("sel");
+    if(hi.h)holiCount++;
     let inner=`<span>${toFa(dd)}</span>`;
-    if(has)inner+=`<span class="hh">${faN(tot,1)}</span>`;      // فقط جمع ساعت، بدون نقطه
-    cell.innerHTML=inner;cell.onclick=()=>{cur=dt;switchView("today");loadToday();};grid.appendChild(cell);
+    if(has)inner+=`<span class="hh">${faN(tot,1)}</span>`;
+    else if(hi.e && !hi.h)inner+=`<span class="mk-ev"></span>`;   // مناسبتِ غیرتعطیل → نقطهٔ کهربایی
+    cell.innerHTML=inner;
+    if(hi.e)cell.title=hi.e.replace(/\s*\|\s*/g,"، ");
+    cell.onclick=()=>{cur=dt;switchView("today");loadToday();};grid.appendChild(cell);
   }
-  // جمع‌بندی پایین تقویم
   $("cal-summary").innerHTML =
     `<div class="cs-item"><div class="cs-k">روزهای کارکرد</div><div class="cs-v">${toFa(daysWorked)}</div></div>`+
     `<div class="cs-item"><div class="cs-k">جمع ساعت ماه</div><div class="cs-v">${faN(totalH,1)||"۰"}</div></div>`+
-    `<div class="cs-item"><div class="cs-k">میانگین روزانه</div><div class="cs-v">${daysWorked?faN(totalH/daysWorked,1):"۰"}</div></div>`;
+    `<div class="cs-item"><div class="cs-k">تعطیلات ماه</div><div class="cs-v">${toFa(holiCount)}</div></div>`;
 }
 $("calPrev").onclick=()=>{calJ.jm--;if(calJ.jm<1){calJ.jm=12;calJ.jy--;}renderCal();};
 $("calNext").onclick=()=>{calJ.jm++;if(calJ.jm>12){calJ.jm=1;calJ.jy++;}renderCal();};
