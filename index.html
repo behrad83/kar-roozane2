@@ -130,7 +130,10 @@
   .cell.sel .mk-ev{background:#fff}
   .d-holi{font-size:12px;margin-top:5px;color:#E08A1E;font-weight:600;line-height:1.5;padding:0 6px}
   .d-holi.holi{color:var(--warn)}
-  .cell .hh{position:absolute;top:3px;right:5px;font-size:9px;font-weight:700;color:#fff;background:rgba(0,0,0,.32);padding:0 4px;border-radius:7px;direction:ltr;unicode-bidi:isolate}
+  .cell .dn{line-height:1}
+  .cell .hh{position:absolute;bottom:3px;left:50%;transform:translateX(-50%);font-size:8.5px;font-weight:700;color:#fff;background:rgba(0,0,0,.30);padding:0 5px;border-radius:7px;direction:ltr;unicode-bidi:isolate;white-space:nowrap}
+  .cell .ev-dot{position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:#E08A1E}
+  .cell .ev-dot.ev-dh{background:var(--warn)}
   .cell.worked{border-color:transparent}
   .cell.worked .dn{color:#fff;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.45)}
   .cell .ev-bar{position:absolute;bottom:0;left:0;right:0;font-size:7.5px;line-height:1.5;background:#F6E7C9;color:#8A5A12;padding:1px 3px;border-radius:0 0 9px 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
@@ -727,7 +730,10 @@ function paintCal(map,holi){
     if(hi.h)holiCount++;
     let inner=`<span class="dn">${toFa(dd)}</span>`;
     if(has)inner+=`<span class="hh">${faN(tot,1)}</span>`;
-    if(hi.e){const short=hi.e.split("|")[0].trim().slice(0,14);inner+=`<span class="ev-bar ${hi.h?'ev-h':''}">${short}</span>`;}
+    if(hi.e){
+      if(has)inner+=`<span class="ev-dot ${hi.h?'ev-dh':''}"></span>`;   // روز کاری: فقط نقطهٔ مناسبت گوشه
+      else{const short=hi.e.split("|")[0].trim().slice(0,16);inner+=`<span class="ev-bar ${hi.h?'ev-h':''}">${short}</span>`;}
+    }
     cell.innerHTML=inner;
     if(hi.e)cell.title=hi.e.replace(/\s*\|\s*/g,"، ");
     cell.onclick=()=>{cur=dt;switchView("today");loadToday();};grid.appendChild(cell);
