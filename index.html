@@ -130,7 +130,13 @@
   .cell.sel .mk-ev{background:#fff}
   .d-holi{font-size:12px;margin-top:5px;color:#E08A1E;font-weight:600;line-height:1.5;padding:0 6px}
   .d-holi.holi{color:var(--warn)}
-  .cell .hh{font-size:10px;color:var(--muted);margin-top:1px;direction:ltr;unicode-bidi:isolate;max-width:100%;overflow:hidden;white-space:nowrap}.cell.sel .hh{color:#D3ECEE}
+  .cell .hh{position:absolute;top:3px;right:5px;font-size:9px;font-weight:700;color:#fff;background:rgba(0,0,0,.32);padding:0 4px;border-radius:7px;direction:ltr;unicode-bidi:isolate}
+  .cell.worked{border-color:transparent}
+  .cell.worked .dn{color:#fff;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.45)}
+  .cell .ev-bar{position:absolute;bottom:0;left:0;right:0;font-size:7.5px;line-height:1.5;background:#F6E7C9;color:#8A5A12;padding:1px 3px;border-radius:0 0 9px 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+  .cell .ev-bar.ev-h{background:#F3D2D7;color:#8E2833;font-weight:600}
+  .cell.sel .ev-bar{background:rgba(255,255,255,.22);color:#fff}
+  .cell.worked .ev-bar{border-radius:0}
   .calnote{padding:0 16px 14px;font-size:12px;color:var(--muted)}
   .cal-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:14px 16px 4px;border-top:1px solid var(--line);margin-top:4px}
   .cs-item{background:#FBFDFD;border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center}
@@ -148,6 +154,9 @@
   .paycard{margin:14px 16px 0;background:var(--accent);color:#fff;border-radius:14px;padding:16px;display:flex;align-items:center;justify-content:space-between}
   .paycard .k{font-size:13px;color:#D3ECEE}.paycard .v{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}.paycard .v small{font-size:14px;font-weight:500}
   .mv-actions{display:flex;gap:10px;flex-wrap:wrap;padding:16px}
+  .analyt{margin:4px 16px 16px;padding:14px;border:1px dashed var(--line-2);border-radius:12px;background:#FBFDFD}
+  .analyt-h{font-size:14px;font-weight:700}
+  .analyt-sub{font-size:12px;color:var(--muted);margin:2px 0 12px}
   @media(max-width:560px){.mstats{grid-template-columns:repeat(2,1fr)}}
   .btn{font-family:inherit;font-size:14.5px;font-weight:600;border-radius:11px;padding:11px 18px;cursor:pointer;border:1px solid transparent;transition:.15s}
   .btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent-ink)}
@@ -325,7 +334,23 @@
       <div class="paycard hide"><div class="k">مبلغ دریافتی این ماه</div><div class="v"><span id="mv-pay">۰</span> <small>تومان</small></div></div>
       <div class="mlist" id="mv-daycount"></div>
       <div class="mstatus" id="mv-status"></div>
-      <div class="mv-actions"><button class="btn btn-primary" id="mv-export">استخراج فایل اکسل</button></div>
+      <div class="mv-actions"><button class="btn btn-primary" id="mv-export">استخراج فایل اکسل (تحویل)</button></div>
+      <div class="analyt">
+        <div class="analyt-h">استخراج داده‌ی کامل (برای تحلیل / هوش مصنوعی)</div>
+        <div class="analyt-sub">هر وقفه و هر کار خارج در ردیف جدا، با تاریخ و ساعت — بدون قاطی‌شدن.</div>
+        <div class="field" style="margin-bottom:10px"><label>بازه</label>
+          <select id="an-range">
+            <option value="month">همین ماه</option>
+            <option value="year">کل امسال</option>
+            <option value="all">همه‌ی داده‌ها</option>
+          </select>
+        </div>
+        <div class="mv-actions" style="padding:0">
+          <button class="btn btn-ghost" id="an-json">خروجی JSON</button>
+          <button class="btn btn-ghost" id="an-xlsx">خروجی اکسل ساختارمند</button>
+        </div>
+        <div class="mstatus" id="an-status" style="padding:8px 0 0"></div>
+      </div>
     </div>
   </section>
 </div>
@@ -354,9 +379,8 @@
     <button class="btn btn-primary" id="btnPing">بررسی اتصال</button>
     <div class="sett-block">
       <label style="font-size:13px;font-weight:700">قفل ورود</label>
-      <button class="btn btn-ghost" id="setPin">تعیین/تغییر رمز ورود</button>
       <button class="btn btn-ghost" id="toggleFp">فعال‌کردن اثر انگشت روی این دستگاه</button>
-      <p class="hint">اثر انگشت سریع‌ترین راه ورود است و فقط روی همین دستگاه کار می‌کند. رمز، راه پشتیبان است. اگر رمز را فراموش کردی، در صفحهٔ ورود با «رمز سرور» بازنشانی‌اش می‌کنی.</p>
+      <p class="hint">ورود با رمز اصلی انجام می‌شود که سرور آن را می‌سنجد و یک نشست ۲۴ساعته می‌دهد. اثر انگشت (اختیاری) فقط روی همین دستگاه، به‌عنوان قفل سریعِ محلی کار می‌کند.</p>
     </div>
   </div>
   <div class="dlg-foot"><button class="btn btn-ghost" id="dlgClose">بستن</button></div>
@@ -395,8 +419,13 @@ const sameDay=(a,b)=>a.getTime()===b.getTime();
 let cur=todayUTC(), calJ=jOf(cur);
 let holiCache={};
 const API_URL="https://script.google.com/macros/s/AKfycbzp3H2EuDXUk6H-S7mqAzBN9o8i6U7ozkw73WbSvmteukZiq9Iur2GuolD3dctljgjeNQ/exec";
-const API_TOKEN="behrad1383";
-const cfg=()=>({url:API_URL,token:API_TOKEN});
+const API_KEY="behrad1383";      // کلید سبک فقط برای login/ping
+const MASTER_PW="behrad1383";    // رمز اصلی — سرور آن را می‌سنجد
+// توکن session (۲۴ ساعته) پس از ورود موفق از سرور گرفته و ذخیره می‌شود
+function getSession(){try{const s=JSON.parse(localStorage.getItem("wl_sess")||"null");if(s&&s.token&&Date.now()<s.exp)return s.token;}catch(e){}return "";}
+function setSession(token){localStorage.setItem("wl_sess",JSON.stringify({token,exp:Date.now()+24*3600*1000}));}
+function clearSession(){localStorage.removeItem("wl_sess");}
+const cfg=()=>({url:API_URL,token:getSession()});
 const getRate=()=>Number(toEn(localStorage.getItem("wl_rate")||"180000"))||180000;
 const setRate=r=>localStorage.setItem("wl_rate",String(r));
 
@@ -431,12 +460,23 @@ const hasPending=k=>pendingGet().includes(k);
 
 const $=id=>document.getElementById(id);
 async function api(action,payload){
-  const c=cfg();if(!c.url||!c.token)throw new Error("no-config");
-  const body=JSON.stringify(Object.assign({action,token:c.token},payload));
-  const res=await fetch(c.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body});
+  const url=API_URL, token=getSession();
+  if(!token)throw new Error("unauthorized");
+  const body=JSON.stringify(Object.assign({action,token},payload));
+  const res=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body});
   const data=JSON.parse(await res.text());
-  if(!data.ok)throw new Error(data.error||"err");
+  if(!data.ok){
+    if(data.error==="unauthorized"){clearSession();try{showLock("enter");}catch(e){}}
+    throw new Error(data.error||"err");
+  }
   return data;
+}
+// ورود: رمز را به سرور می‌فرستد؛ سرور می‌سنجد و توکن ۲۴ساعته می‌دهد
+async function serverLogin(pw){
+  const res=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"login",key:API_KEY,pw})});
+  const data=JSON.parse(await res.text());
+  if(data.ok&&data.token){setSession(data.token);return true;}
+  return false;
 }
 function syncMsg(msg,cls=""){const s=$("sync");s.textContent=msg;s.className="sync "+cls;}
 
@@ -503,7 +543,9 @@ function renderHero(){
 function nowHM(){const n=new Date();return n.getHours()+":"+String(n.getMinutes()).padStart(2,"0");}
 function stamp(w){
   const t=nowHM();if(w==="start")curDay.start=t;else curDay.end=t;
-  $(`c-${w}-manual`).value=toFa(t);setClock(w);commit();
+  $(`c-${w}-manual`).value=toFa(t);
+  if(w==="end")flushInputs();          // هر ورزش/کارِ نوشته‌شده ولی +نزده را ثبت کن
+  setClock(w);commit();
   if(w==="end" && !(curDay.desc&&curDay.desc.trim())){   // remind to fill توضیحات (not mandatory)
     const ta=$("d-desc");ta.classList.remove("warn");void ta.offsetWidth;ta.classList.add("warn");
     $("desc-warn").classList.remove("hide");
@@ -585,6 +627,21 @@ function addBreak(){
   $("b-hr").disabled=false;$("b-min").disabled=false;
   renderItems("breaks");commit();
 }
+// اگر چیزی در کادرها نوشته شده ولی + زده نشده، هنگام ذخیره خودکار اضافه کن
+function flushInputs(){
+  let changed=false;
+  // وقفه
+  const bl=$("b-label").value.trim(), bhr=Number(toEn($("b-hr").value))||0, bmin=Number(toEn($("b-min").value))||0;
+  const bhours=bhr>0?bhr:bmin/60;
+  if(bl||bhours){curDay.breaks.push({label:bl||"ورزش",hours:Math.round(bhours*100)/100});
+    $("b-label").value="";$("b-hr").value="";$("b-min").value="";$("b-hr").disabled=false;$("b-min").disabled=false;changed=true;}
+  // کار خارج
+  const el=$("e-label").value.trim(), ehrs=Number(toEn($("e-hrs").value))||0;
+  if(el||ehrs){curDay.externals.push({label:el||"کار",hours:ehrs});
+    $("e-label").value="";$("e-hrs").value="";changed=true;}
+  if(changed){renderItems("breaks");renderItems("ext");}
+  return changed;
+}
 function linkExclusive(aId,bId){                 // filling one disables the other
   const a=$(aId),b=$(bId);
   a.addEventListener("input",()=>{b.disabled=a.value.trim()!=="";});
@@ -634,7 +691,7 @@ $("fixSpell").onclick=()=>{
 $("dayPrev").onclick=()=>{cur=new Date(cur.getTime()-864e5);loadToday();};
 $("dayNext").onclick=()=>{cur=new Date(cur.getTime()+864e5);loadToday();};
 $("d-backToday").onclick=()=>{cur=todayUTC();loadToday();};
-$("saveDay").onclick=async()=>{const b=$("saveDay");b.textContent="در حال ذخیره…";writeCache(cur,curDay);await pushDay(cur,curDay);b.textContent="ذخیره در سرور";};
+$("saveDay").onclick=async()=>{const b=$("saveDay");b.textContent="در حال ذخیره…";flushInputs();renderHero();writeCache(cur,curDay);await pushDay(cur,curDay);b.textContent="ذخیره در سرور";};
 $("delDay").onclick=async()=>{
   if(!confirm("همهٔ دادهٔ این روز پاک شود؟"))return;
   curDay=blankDay();writeCache(cur,curDay);renderDay();
@@ -642,39 +699,35 @@ $("delDay").onclick=async()=>{
 };
 
 /* ===== CALENDAR ===== */
-function heatColor(h){                          // میزان ساعت → شدت رنگ سبز
+function heatColor(h){                          // میزان ساعت → شدت رنگ سبز (حداقل ۰٫۴ تا عدد سفید خوانا بماند)
   if(h<=0) return "";
-  const t=Math.max(0,Math.min(1,h/11));         // ~۱۱ ساعت = پررنگ‌ترین
-  const alpha=(0.12+t*0.78).toFixed(2);
-  return `background:rgba(14,124,134,${alpha});border-color:rgba(14,124,134,${(0.3+t*0.5).toFixed(2)})`;
+  const t=Math.max(0,Math.min(1,h/11));
+  const alpha=(0.40+t*0.52).toFixed(2);
+  return `background:rgba(14,124,134,${alpha});border-color:rgba(14,124,134,${(0.5+t*0.4).toFixed(2)})`;
 }
-async function renderCal(){
+function paintCal(map,holi){
   $("cal-title").textContent=`${MONTHS[calJ.jm-1]} ${toFa(calJ.jy)}`;
   const grid=$("cal-grid");grid.innerHTML="";
   WD_SHORT.forEach(w=>{const d=document.createElement("div");d.className="wl";d.textContent=w;grid.appendChild(d);});
   const first=dateOfJ(calJ.jy,calJ.jm,1),lead=(first.getUTCDay()+1)%7;
   for(let i=0;i<lead;i++){const b=document.createElement("div");b.className="cell blank";grid.appendChild(b);}
   const n=daysInJ(calJ.jy,calJ.jm),today=todayUTC(),selJ=jOf(cur);
-  let map={},holi={};
-  try{const d=await api("getMonth",{jy:calJ.jy,jm:calJ.jm});(d.days||[]).forEach(x=>{map[x.jd]=norm(x);writeCache(dateOfJ(calJ.jy,calJ.jm,x.jd),norm(x));});}catch(e){}
-  try{const h=await api("holidays",{jy:calJ.jy,jm:calJ.jm});holi=h.days||{};holiCache[calJ.jy+"_"+calJ.jm]=holi;}catch(e){holi=holiCache[calJ.jy+"_"+calJ.jm]||{};}
   let daysWorked=0,totalH=0,holiCount=0;
   for(let dd=1;dd<=n;dd++){
     const dt=dateOfJ(calJ.jy,calJ.jm,dd);const cell=document.createElement("div");cell.className="cell";
     const day=map[dd]||readCache(dt);
     const has=dayHasData(day), tot=has?dayTotal(day):0;
-    const hi=holi[dd]||{}, isFri=dt.getUTCDay()===5;
-    const official=hi.h&&!isFri;                 // تعطیل رسمی (غیر جمعه)
-    if(has){daysWorked++;totalH+=tot; const s=heatColor(tot); if(s)cell.setAttribute("style",s);}
+    const hi=holi[dd]||{}, isFri=dt.getUTCDay()===5, official=hi.h&&!isFri;
+    if(has){daysWorked++;totalH+=tot; const s=heatColor(tot); if(s)cell.setAttribute("style",s); cell.classList.add("worked");}
     else if(official){cell.setAttribute("style","background:rgba(178,58,72,.10);border-color:rgba(178,58,72,.45)");}
-    if(isFri||hi.h)cell.classList.add("fri");    // عدد قرمز برای هر تعطیل
-    if(official)cell.classList.add("holi");      // نشانِ تعطیل رسمی
+    if((isFri||hi.h)&&!has)cell.classList.add("fri");   // عدد قرمز فقط وقتی کاری نیست (روی سبز عدد سفید می‌شود)
+    if(official)cell.classList.add("holi");
     if(sameDay(dt,today))cell.classList.add("today");
     if(selJ.jy===calJ.jy&&selJ.jm===calJ.jm&&selJ.jd===dd)cell.classList.add("sel");
     if(hi.h)holiCount++;
-    let inner=`<span>${toFa(dd)}</span>`;
+    let inner=`<span class="dn">${toFa(dd)}</span>`;
     if(has)inner+=`<span class="hh">${faN(tot,1)}</span>`;
-    else if(hi.e && !hi.h)inner+=`<span class="mk-ev"></span>`;   // مناسبتِ غیرتعطیل → نقطهٔ کهربایی
+    if(hi.e){const short=hi.e.split("|")[0].trim().slice(0,14);inner+=`<span class="ev-bar ${hi.h?'ev-h':''}">${short}</span>`;}
     cell.innerHTML=inner;
     if(hi.e)cell.title=hi.e.replace(/\s*\|\s*/g,"، ");
     cell.onclick=()=>{cur=dt;switchView("today");loadToday();};grid.appendChild(cell);
@@ -683,6 +736,26 @@ async function renderCal(){
     `<div class="cs-item"><div class="cs-k">روزهای کارکرد</div><div class="cs-v">${toFa(daysWorked)}</div></div>`+
     `<div class="cs-item"><div class="cs-k">جمع ساعت ماه</div><div class="cs-v">${faN(totalH,1)||"۰"}</div></div>`+
     `<div class="cs-item"><div class="cs-k">تعطیلات ماه</div><div class="cs-v">${toFa(holiCount)}</div></div>`;
+}
+function cacheMapFor(jy,jm){
+  const map={},n=daysInJ(jy,jm);
+  for(let dd=1;dd<=n;dd++){const day=readCache(dateOfJ(jy,jm,dd));if(dayHasData(day))map[dd]=day;}
+  return map;
+}
+function renderCal(){
+  const token=calJ.jy+"_"+calJ.jm;
+  // ۱) فوری از کش محلی رندر کن — هیچ معطلی‌ای نیست
+  paintCal(cacheMapFor(calJ.jy,calJ.jm), holiCache[token]||{});
+  // ۲) داده‌ی تازه را در پس‌زمینه و موازی بگیر، بعد دوباره رنگ بزن
+  const jy=calJ.jy,jm=calJ.jm;
+  Promise.all([
+    api("getMonth",{jy,jm}).then(d=>d.days||[]).catch(()=>null),
+    api("holidays",{jy,jm}).then(h=>h.days||{}).catch(()=>null)
+  ]).then(([days,holi])=>{
+    if(days){days.forEach(x=>writeCache(dateOfJ(jy,jm,x.jd),norm(x)));}
+    if(holi){holiCache[jy+"_"+jm]=holi;}
+    if(token===calJ.jy+"_"+calJ.jm) paintCal(cacheMapFor(jy,jm), holiCache[token]||{});
+  });
 }
 $("calPrev").onclick=()=>{calJ.jm--;if(calJ.jm<1){calJ.jm=12;calJ.jy--;}renderCal();};
 $("calNext").onclick=()=>{calJ.jm++;if(calJ.jm>12){calJ.jm=1;calJ.jy++;}renderCal();};
@@ -698,8 +771,9 @@ function buildRows(days,jy,jm){
     att+=a;ex+=e;extn+=g;tot+=t;
     const parts=[];if(d.desc&&d.desc.trim())parts.push(d.desc.trim());
     d.externals.forEach(it=>{const l=(it.label||"کار").trim();parts.push(/ساعت/.test(l)?l:`${l} (${faN(it.hours)} ساعت)`);});
+    const exNames=d.breaks.map(it=>(it.label||"وقفه").trim()).filter(Boolean).join("، ");
     const dt=dateOfJ(jy,jm,d.jd);
-    rows.push({date:`${wdOf(dt)} ${toFa(d.jd)}`,start:toEn(d.start),end:toEn(d.end),ex:e,extn:g,desc:parts.join("، ")});});
+    rows.push({date:`${wdOf(dt)} ${toFa(d.jd)}`,start:toEn(d.start),end:toEn(d.end),ex:e,exNames:exNames,extn:g,desc:parts.join("، ")});});
   return{rows,att,ex,extn,tot};
 }
 async function loadMonth(){
@@ -741,7 +815,7 @@ async function exportExcel(m,jm,jy,fname){
   const ws=wb.addWorksheet(`${MONTHS[jm-1]} ${jy}`,{views:[{rightToLeft:true,state:"frozen",ySplit:1}]});
   ws.columns=[{width:16},{width:60},{width:11},{width:11},{width:13},{width:13},{width:18},{width:19}];
   ws.addRow(["تاریخ / "+MONTHS[jm-1],"شرح کار","ساعت شروع","ساعت پایان","حضور (ساعت)","ورزش (ساعت)","فعالیت خارج (ساعت)","جمع کل روز (ساعت)"]);
-  m.rows.forEach(r=>{const a=attFromRow(r);ws.addRow([r.date,r.desc,r.start,r.end,a,r.ex||null,r.extn||null,round2(a-r.ex+r.extn)]);});
+  m.rows.forEach(r=>{const a=attFromRow(r);const exCell=r.ex?(r.exNames?`${r.exNames} (${faN(r.ex)})`:r.ex):null;ws.addRow([r.date,r.desc,r.start,r.end,a,exCell,r.extn||null,round2(a-r.ex+r.extn)]);});
   const totIdx=ws.rowCount+1,r1=x=>Math.round(x*10)/10;
   ws.addRow(["جمع کل (ساعت)","","","",r1(m.att),r1(m.ex),r1(m.extn),r1(m.tot)]);ws.mergeCells(totIdx,1,totIdx,4);
   const payIdx=totIdx+2;ws.getCell(payIdx,7).value="مبلغ دریافتی این ماه :";ws.getCell(payIdx,8).value=Math.round(m.tot*getRate());
@@ -755,6 +829,80 @@ async function exportExcel(m,jm,jy,fname){
   for(let c=7;c<=8;c++)ws.getCell(payIdx,c).border={left:c===7?med:thin,right:c===8?med:thin,top:med,bottom:med};
   const buf=await wb.xlsx.writeBuffer();const blob=new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=fname;a.click();URL.revokeObjectURL(a.href);
+}
+
+/* ===== استخراج داده‌ی کامل (تحلیلی) ===== */
+function anStatus(msg,cls=""){const s=$("an-status");s.textContent=msg;s.className="mstatus "+cls;}
+function rangeBounds(kind){
+  const j=jOf(cur);
+  if(kind==="year") return {fromJy:j.jy,fromJm:1,toJy:j.jy,toJm:12,label:`${toEn(String(j.jy))}`};
+  if(kind==="all")  return {fromJy:1300,fromJm:1,toJy:1500,toJm:12,label:"all"};
+  const jm=+$("mv-month").value,jy=+toEn($("mv-year").value);
+  return {fromJy:jy,fromJm:jm,toJy:jy,toJm:jm,label:`${MONTHS[jm-1]}_${jy}`};
+}
+async function fetchRange(){
+  const kind=$("an-range").value, b=rangeBounds(kind);
+  const d=await api("getRange",{fromJy:b.fromJy,fromJm:b.fromJm,toJy:b.toJy,toJm:b.toJm});
+  const days=(d.days||[]).map(x=>{const y=norm(x);y.jy=x.jy;y.jm=x.jm;y.jd=x.jd;return y;});
+  return {days,label:b.label};
+}
+// ساختار تحلیلی هر روز: تاریخ، ساعت‌ها، حضور، لیست وقفه‌ها، لیست کارهای خارج، شرح
+function dayRecord(y){
+  const dt=dateOfJ(y.jy,y.jm,y.jd), att=attHours(y);
+  return {
+    jalali:`${y.jy}/${y.jm}/${y.jd}`, weekday:wdOf(dt),
+    gregorian:`${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,"0")}-${String(dt.getUTCDate()).padStart(2,"0")}`,
+    start:y.start||"", end:y.end||"", attendanceHours:att,
+    breaks:(y.breaks||[]).map(b=>({label:b.label||"",hours:b.hours||0,minutes:Math.round((b.hours||0)*60)})),
+    externals:(y.externals||[]).map(e=>({label:e.label||"",hours:e.hours||0})),
+    description:y.desc||"",
+    totalHours:dayTotal(y)
+  };
+}
+$("an-json").onclick=async()=>{
+  anStatus("در حال بارگیری از سرور…");
+  try{
+    const {days,label}=await fetchRange();
+    if(!days.length){anStatus("داده‌ای در این بازه نیست.","err");return;}
+    const out={exportedAt:new Date().toISOString(),count:days.length,days:days.map(dayRecord)};
+    const blob=new Blob([JSON.stringify(out,null,2)],{type:"application/json"});
+    dl(blob,`worklog_data_${label}.json`);anStatus("فایل JSON آماده شد ✓","ok");
+  }catch(e){anStatus("خطا در استخراج (اتصال سرور؟).","err");}
+};
+$("an-xlsx").onclick=async()=>{
+  anStatus("در حال ساخت فایل…");
+  try{
+    const {days,label}=await fetchRange();
+    if(!days.length){anStatus("داده‌ای در این بازه نیست.","err");return;}
+    await buildAnalyticXlsx(days,label);anStatus("فایل اکسل ساختارمند آماده شد ✓","ok");
+  }catch(e){anStatus("خطا در ساخت فایل.","err");}
+};
+function dl(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href);}
+async function buildAnalyticXlsx(days,label){
+  const wb=new ExcelJS.Workbook();
+  const rtl=[{rightToLeft:true,state:"frozen",ySplit:1}];
+  // شیت ۱: روزها (یک ردیف در هر روز)
+  const s1=wb.addWorksheet("روزها",{views:rtl});
+  s1.columns=[{width:14},{width:10},{width:12},{width:9},{width:9},{width:11},{width:11},{width:13},{width:13},{width:50}];
+  s1.addRow(["تاریخ شمسی","روز هفته","میلادی","ورود","خروج","حضور(ساعت)","وقفه(ساعت)","خارج(ساعت)","جمع(ساعت)","شرح کار"]);
+  // شیت ۲: کارهای خارج از حضور (هر مورد یک ردیف)
+  const s2=wb.addWorksheet("کار خارج",{views:rtl});
+  s2.columns=[{width:14},{width:10},{width:40},{width:11}];
+  s2.addRow(["تاریخ شمسی","روز هفته","شرح کار خارج","ساعت"]);
+  // شیت ۳: وقفه‌ها (هر مورد یک ردیف)
+  const s3=wb.addWorksheet("وقفه‌ها",{views:rtl});
+  s3.columns=[{width:14},{width:10},{width:30},{width:9},{width:9}];
+  s3.addRow(["تاریخ شمسی","روز هفته","عنوان","ساعت","دقیقه"]);
+  days.forEach(y=>{
+    const r=dayRecord(y);
+    s1.addRow([r.jalali,r.weekday,r.gregorian,r.start,r.end,r.attendanceHours,round2(sumH(y.breaks)),round2(sumH(y.externals)),r.totalHours,r.description]);
+    r.externals.forEach(e=>s2.addRow([r.jalali,r.weekday,e.label,e.hours]));
+    r.breaks.forEach(b=>s3.addRow([r.jalali,r.weekday,b.label,b.hours,b.minutes]));
+  });
+  [s1,s2,s3].forEach(ws=>{ws.getRow(1).font={bold:true};ws.getRow(1).height=26;
+    ws.eachRow(row=>row.eachCell(c=>{c.border={top:{style:"thin"},bottom:{style:"thin"},left:{style:"thin"},right:{style:"thin"}};}));});
+  const buf=await wb.xlsx.writeBuffer();
+  dl(new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),`worklog_analysis_${label}.xlsx`);
 }
 
 /* ===== views ===== */
@@ -775,8 +923,12 @@ $("setupOpen").onclick=()=>$("btnSettings").click();
 $("dlgClose").onclick=()=>$("dlg").close();
 $("btnPing").onclick=async()=>{
   const b=$("btnPing");b.textContent="در حال بررسی…";
-  try{await api("ping",{});b.textContent="اتصال برقرار است ✓";}
-  catch(e){b.textContent="اتصال برقرار نشد — دوباره تلاش کن";alert("اتصال برقرار نشد.\n"+e.message+"\n\nاگر رمز را در Code.gs عوض کرده‌ای، حتماً یک‌بار دوباره Deploy کن.");}
+  try{
+    const res=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"ping",key:API_KEY})});
+    const data=JSON.parse(await res.text());
+    b.textContent=data.ok?"اتصال برقرار است ✓":"اتصال برقرار نشد";
+    if(!data.ok)alert("اتصال برقرار نشد: "+(data.error||"")+"\n\nاگر تازه Code.gs را عوض کرده‌ای، یک‌بار New version → Deploy کن.");
+  }catch(e){b.textContent="اتصال برقرار نشد";alert("اتصال برقرار نشد.\n"+e.message);}
 };
 
 /* clean up only stale server-config leftovers (keep lock: wl_pin, wl_fp) */
@@ -795,18 +947,18 @@ let lockMode="enter";
 function showLock(mode){
   lockMode=mode;$("lock").classList.remove("hide");$("lock-err").textContent="";
   $("lock-pin").value="";$("lock-pin2").value="";$("lock-pin").type="password";
+  $("lock-pin").inputMode = mode==="set" ? "numeric" : "text";
   const isSet=mode==="set", isRec=mode==="recover";
   $("lock-title").textContent=isSet?"تعیین رمز":(isRec?"بازنشانی رمز":"ورود");
-  $("lock-sub").textContent=isSet?"یک رمز عددی (حداقل ۴ رقم) انتخاب کن":(isRec?"رمز سرور را وارد کن تا قفل بازنشانی شود":"با اثر انگشت یا رمز وارد شو");
-  $("lock-pin").placeholder=isSet?"رمز جدید":(isRec?"رمز سرور":"••••");
+  $("lock-sub").textContent=isSet?"یک رمز عددی (حداقل ۴ رقم) انتخاب کن":(isRec?"رمز اصلی را وارد کن تا قفل بازنشانی شود":"با اثر انگشت یا رمز وارد شو");
+  $("lock-pin").placeholder=isSet?"رمز جدید":(isRec?"رمز اصلی":"رمز");
   if(isRec)$("lock-pin").type="text";
   $("lock-pin2").classList.toggle("hide",!isSet);
   $("lock-go").textContent=isSet?"ذخیره و ورود":(isRec?"بازنشانی":"ورود با رمز");
-  $("lock-fp").classList.toggle("hide",!(mode==="enter"&&hasFp()));
+  $("lock-fp").classList.toggle("hide",!(mode==="enter"&&hasFp()&&getSession()));
   const link=$("lock-link");
   if(isRec){link.textContent="بازگشت";link.onclick=()=>showLock("enter");}
-  else if(isSet){link.textContent="";link.onclick=null;}
-  else{link.textContent="رمز را فراموش کردی؟";link.onclick=()=>showLock("recover");}
+  else{link.textContent="";link.onclick=null;}   // رمز اصلی همیشه کار می‌کند؛ نیازی به «فراموشی» نیست
   setTimeout(()=>{if(mode==="enter"&&hasFp())return;$("lock-pin").focus();},60);
 }
 function unlock(){$("lock").classList.add("hide");flushPending();}
@@ -814,17 +966,11 @@ function lockErr(m){const e=$("lock-err");e.textContent=m;const c=$("lockcard");
 
 $("lock-go").onclick=async()=>{
   const val=toEn($("lock-pin").value).trim();
-  if(lockMode==="set"){
-    const p2=toEn($("lock-pin2").value).trim();
-    if(val.length<4){lockErr("رمز حداقل ۴ رقم باشد.");return;}
-    if(val!==p2){lockErr("رمز و تکرارش یکی نیست.");return;}
-    await savePin(val);unlock();
-  }else if(lockMode==="recover"){
-    if(val===API_TOKEN){localStorage.removeItem("wl_pin");localStorage.removeItem("wl_fp");showLock("set");}
-    else lockErr("رمز سرور نادرست است.");
-  }else{
-    if(await checkPin(val))unlock();else lockErr("رمز اشتباه است.");
-  }
+  if(!val){lockErr("رمز را وارد کن.");return;}
+  $("lock-go").textContent="در حال بررسی…";
+  let ok=false; try{ok=await serverLogin(val);}catch(e){ok=false;}
+  $("lock-go").textContent="ورود با رمز";
+  if(ok)unlock(); else lockErr("رمز اشتباه است یا اتصال برقرار نشد.");
 };
 $("lock-pin").addEventListener("keydown",e=>{if(e.key==="Enter"){if(lockMode==="set")$("lock-pin2").focus();else $("lock-go").click();}});
 $("lock-pin2").addEventListener("keydown",e=>{if(e.key==="Enter")$("lock-go").click();});
@@ -846,7 +992,6 @@ async function fpUnlock(){
 }
 $("lock-fp").onclick=async()=>{try{await fpUnlock();unlock();}catch(e){lockErr("اثر انگشت تأیید نشد؛ با رمز وارد شو.");}};
 $("btnLock").onclick=()=>showLock("enter");
-$("setPin").onclick=()=>{$("dlg").close();showLock("set");};
 $("toggleFp").onclick=async()=>{
   if(hasFp()){localStorage.removeItem("wl_fp");refreshFpLabel();alert("اثر انگشت غیرفعال شد.");return;}
   if(!await fpAvailable()){alert("این دستگاه/مرورگر از اثر انگشت پشتیبانی نمی‌کند (نیازمند HTTPS و حسگر بیومتریک).");return;}
@@ -854,8 +999,12 @@ $("toggleFp").onclick=async()=>{
 };
 async function refreshFpLabel(){const on=hasFp();$("toggleFp").textContent=on?"غیرفعال‌کردن اثر انگشت":"فعال‌کردن اثر انگشت روی این دستگاه";if(!on&&!await fpAvailable())$("toggleFp").classList.add("hide");else $("toggleFp").classList.remove("hide");}
 async function gate(){
-  if(!pinStore()&&!hasFp()){showLock("set");}       // first run → create a PIN
-  else{showLock("enter");if(hasFp()){try{await fpUnlock();unlock();}catch(e){/* fall back to PIN */}}}
+  if(getSession()){                                   // توکن ۲۴ساعته معتبر است
+    if(hasFp()){showLock("enter");try{await fpUnlock();unlock();}catch(e){/* قفل محلی */}}
+    else{ $("lock").classList.add("hide"); flushPending(); }
+  }else{
+    showLock("enter");                                // باید رمز بزنی → سرور می‌سنجد
+  }
   refreshFpLabel();
 }
 window.addEventListener("focus",()=>flushPending());
